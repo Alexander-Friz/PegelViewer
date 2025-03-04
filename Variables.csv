@@ -1,0 +1,86 @@
+Variable;Nutzung
+ID_PAGE_HEAD;Seitenkopfbereich
+ID_PAGE_BODY;Hauptbereich der Seite
+ID_PRN_HEAD;Anzeige eines Textes innerhalb der Seite
+ID-DA-POP;Pop-up-Bereich für Pegelinformationen
+ID-DA-POP-PIC;Bild innerhalb des Pop-ups
+ID_SELECT_POS;Aktuell ausgewählte Position (Pegel)
+ID_LNK_DEF;Direktlink zur aktuellen Pegelseite
+ID_INFO_W;Wasserstandsanzeige
+ID_INFO_WD;Detailinformationen zum Wasserstand
+ID_INFO_WZ;Zeitstempel des Wasserstands
+ID_INFO_Q;Abflussanzeige
+ID_INFO_QD;Detailinformationen zum Abfluss
+ID_INFO_QZ;Zeitstempel des Abflusses
+ID_INFO_WT;Tagesmittelwert des Wasserstands am Vortag
+ID_INFO_WTD;Detail zum Tagesmittelwert des Wasserstands
+ID_INFO_WTZ;Zeitstempel des Tagesmittelwerts Wasserstand
+ID_INFO_QT;Tagesmittelwert des Abflusses am Vortag
+ID_INFO_QTD;Detail zum Tagesmittelwert des Abflusses
+ID_INFO_QTZ;Zeitstempel des Tagesmittelwerts Abfluss
+ID-PQ-BL1;Bild für Unterwasseransicht
+ID-PQ-BL1-PIC;Bildinhalt der Unterwasseransicht
+ID-PQ-BL2;Bild für Oberwasseransicht
+ID-PQ-BL2-PIC;Bildinhalt der Oberwasseransicht
+ID_BOX_HINT;Hinweisbox für Zusatzinformationen
+ID_BOX_REV;Wartungshinweis für Pegel
+ID_BOX_TAB;Bereich für Tabs mit weiteren Informationen
+ID_SW_WIN_1;Tab: Messwerte
+ID_SW_WIN_2;Tab: Vorhersage
+ID_SW_WIN_3;Tab: Stammdaten
+ID_SW_WIN_4;Tab: Hochwassergefahrenkarte
+ID_SW_WIN_5;Tab: Hydrologische Kennwerte
+ID_SW_WIN_6;Tab: Jahresgang
+ID_SW_CTRL;Steuerelemente für Grafik und Zoom
+ID_SW_WQ_W;Schalter für Wasserstandsanzeige
+ID_SW_WQ_Q;Schalter für Abflussanzeige
+ID_SW_Z;Zoom-Wertanzeige
+ID_WIN_1;Fenster für Messwerte
+ID_SW_GT;Darstellungsschalter für Messwerte
+ID_SW_GT_G;Schalter für grafische Darstellung
+ID_SW_GT_T;Schalter für tabellarische Darstellung
+ID_WIN_MW;Bereich für Messwerte Wasserstand
+ID_WIN_MWT;Messwertbeschreibung Wasserstand
+ID_WIN_MWG;Grafikbereich für Wasserstandsmesswerte
+ID_WIN_MWI;Bild für Wasserstandsmesswerte
+ID_WIN_MQ;Bereich für Messwerte Abfluss
+ID_WIN_MQT;Messwertbeschreibung Abfluss
+ID_WIN_MQG;Grafikbereich für Abflussmesswerte
+ID_WIN_MQI;Bild für Abflussmesswerte
+ID_WIN_2;Fenster für Vorhersage
+ID_WIN_VW;Bereich für Wasserstands-Vorhersage
+ID_WIN_VWT;Beschreibung Wasserstands-Vorhersage
+ID_WIN_VWG;Grafikbereich für Wasserstands-Vorhersage
+ID_WIN_VWI;Bild für Wasserstands-Vorhersage
+ID_WIN_VQ;Bereich für Abfluss-Vorhersage
+ID_WIN_VQT;Beschreibung Abfluss-Vorhersage
+ID_WIN_VQG;Grafikbereich für Abfluss-Vorhersage
+ID_WIN_VQI;Bild für Abfluss-Vorhersage
+ID_WIN_3;Fenster für Stammdaten
+ID_STM_BEM;Bemerkungen zu Stammdaten
+ID_STM_BEMT;Text für Bemerkungen
+ID_STM_BI;Betreiberinformationen
+ID_STM_BI_T;Text für Betreiberinformationen
+ID_STM_BU_T;Betreiber-URL
+ID_STM_BU;Link zur Betreiberseite
+ID_STM_EZG;Einzugsgebiet des Pegels
+ID_STM_OST;Ost-Koordinate des Pegels
+ID_STM_NORD;Nord-Koordinate des Pegels
+ID_STM_PNP;Pegelnullpunkthöhe
+ID_STM_PNU;Einheit der Pegelnullpunkthöhe
+ID_STM_LAGE;Geographische Lage des Pegels
+ID_STM_HMO;Grenzwert der Hochwassermeldeordnung
+ID_STM_HMOV;Wert des HMO-Grenzwerts
+ID_STM_HMOD;Detailinformationen zum HMO-Grenzwert
+ID_STM_HIS;Historische Wassermarken
+ID_STM_L1;Link zur Hochwassergefahrenkarte
+ID_WIN_6;Fenster für Jahresgang
+ID_WIN_JW;Bereich für Jahresgang Wasserstand
+ID_WIN_JWT;Beschreibung Jahresgang Wasserstand
+ID_WIN_JWG;Grafikbereich für Jahresgang Wasserstand
+ID_WIN_JWI;Bild für Jahresgang Wasserstand
+ID_WIN_JQ;Bereich für Jahresgang Abfluss
+ID_WIN_JQT;Beschreibung Jahresgang Abfluss
+ID_WIN_JQG;Grafikbereich für Jahresgang Abfluss
+ID_WIN_JQI;Bild für Jahresgang Abfluss
+ID_PAGE_FOOT;Fußbereich der Seite
