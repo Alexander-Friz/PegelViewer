@@ -10,6 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import threading
 import time
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 # Tkinter-Hauptfenster
@@ -63,6 +64,29 @@ default_stations = [
     "https://hvz.baden-wuerttemberg.de/pegel.html?id=00152",
     "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00105"
 ]
+
+def show_history_plot():
+    if not station_entries:
+        print("⚠️ Keine Daten vorhanden.")
+        return
+
+    plt.figure(figsize=(10, 6))
+
+    for entry in station_entries:
+        times = [t[0] for t in entry["history"]]
+        values = [t[1] for t in entry["history"]]
+        pegel_id = entry["url"].split("id=")[-1]
+        if times and values:
+            plt.plot(times, values, label=f"Station {pegel_id}")
+
+    plt.xlabel("Zeit")
+    plt.ylabel("Wasserstand (cm)")
+    plt.title("Pegelverlauf")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
 
 def rearrange_station_frames():
     width = root.winfo_width()
@@ -138,6 +162,16 @@ def fetch_data(pegel_url, widgets):
         widgets["title_label"].config(text=f"Messstation {pegel_id} - {selected_position}")
         widgets["last_updated"].config(text=f"Letzte Aktualisierung: {now}")
         print(f"🔄 {selected_position} (ID: {pegel_id}) aktualisiert um {now}")
+
+        for entry in station_entries:
+            if entry["url"] == pegel_url:
+                try:
+                    value = int(wasserstand)
+                    entry["history"].append((datetime.now(), value))
+                except ValueError:
+                    print(f"⚠️ Ungültiger Wert für Wasserstand: {wasserstand}")
+            #break
+
 
     root.after(0, update_ui)
 
@@ -248,10 +282,12 @@ def add_station(pegel_url):
     }
 
     station_entries.append({
-        "url": pegel_url,
-        "frame": station_frame,
-        "widgets": widgets
-    })
+    "url": pegel_url,
+    "frame": station_frame,
+    "widgets": widgets,
+    "history": []  # <- hier speichern wir Pegelverlauf
+})
+
 
     rearrange_station_frames()
     threading.Thread(target=fetch_data, args=(pegel_url, widgets), daemon=True).start()
@@ -261,6 +297,7 @@ menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
 menu_bar.add_command(label="Messstation hinzufügen", command=open_url_popup)
 menu_bar.add_command(label="Refresh-Rate ändern", command=set_refresh_rate)
+menu_bar.add_command(label="Pegelverlauf anzeigen", command=show_history_plot)
 menu_bar.add_command(label="Darkmode umschalten", command=toggle_dark_mode)
 
 # Initiale Stationen laden
