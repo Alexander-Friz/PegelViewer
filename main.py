@@ -11,6 +11,7 @@ import threading
 import time
 from datetime import datetime
 
+
 # Tkinter-Hauptfenster
 root = tk.Tk()
 root.title("Pegel-Monitor")
@@ -22,20 +23,81 @@ scroll_y = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
 frame = Frame(canvas)
 
 frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-canvas.create_window((0, 0), window=frame, anchor="nw")
-canvas.configure(yscrollcommand=scroll_y.set)
+frame_id = canvas.create_window((0, 0), window=frame, anchor="nw")
+def on_frame_configure(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
 
+frame.bind("<Configure>", on_frame_configure)
+
+# Scrollen mit der Maus aktivieren
+def _on_mousewheel(event):
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+canvas.bind_all("<MouseWheel>", _on_mousewheel)  # Windows/macOS
+canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))  # Linux scroll up
+canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))   # Linux scroll down
+
+
+
+for i in range(3):
+    frame.grid_columnconfigure(i, weight=1)
+
+canvas.configure(yscrollcommand=scroll_y.set)
 canvas.pack(side="left", fill="both", expand=True)
 scroll_y.pack(side="right", fill="y")
 
-# Liste für Messstationen
-station_frames = {}
-refresh_interval = 300  # Standard-Refresh-Rate auf 5 Minuten
+# Variablen
+dark_mode = False
+station_entries = []
+refresh_interval = 300  # 5 Minuten
 refresh_thread = None
 
+# Standard-Messstationen
+default_stations = [
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00063",
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00061",
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00032",
+    "https://hvz.baden-wuerttemberg.de/pegel.html?id=00066",
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00065",
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00045",
+    "https://hvz.baden-wuerttemberg.de/pegel.html?id=00152",
+    "https://www.hvz.baden-wuerttemberg.de/pegel.html?id=00105"
+]
 
-def fetch_data(pegel_url, frame):
-    """Holt aktuelle Pegeldaten für eine bestimmte Messstation und aktualisiert die Anzeige."""
+def rearrange_station_frames():
+    width = root.winfo_width()
+    if width > 1000:
+        columns = 3
+    elif width > 600:
+        columns = 2
+    else:
+        columns = 1
+
+    for i in range(columns):
+        frame.grid_columnconfigure(i, weight=1)
+
+    for index, entry in enumerate(station_entries):
+        row = index // columns
+        col = index % columns
+        entry["frame"].grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
+def toggle_dark_mode():
+    global dark_mode
+    dark_mode = not dark_mode
+
+    bg_color = "#2e2e2e" if dark_mode else "white"
+    fg_color = "white" if dark_mode else "black"
+
+    root.configure(bg=bg_color)
+    frame.configure(bg=bg_color)
+    canvas.configure(bg=bg_color)
+
+    for entry in station_entries:
+        entry["frame"].configure(bg=bg_color)
+        for widget in entry["widgets"].values():
+            widget.configure(bg=bg_color, fg=fg_color)
+
+def fetch_data(pegel_url, widgets):
     pegel_id = pegel_url.split("id=")[-1]
 
     try:
@@ -61,91 +123,79 @@ def fetch_data(pegel_url, frame):
         abfluss = driver.find_element(By.ID, "ID_INFO_Q").text
         abfluss_qd = driver.find_element(By.ID, "ID_INFO_QD").text
         abfluss_qz = driver.find_element(By.ID, "ID_INFO_QZ").text
-    
+
     except Exception as e:
         print(f"⚠️ Fehler bei {pegel_url}: {e}")
         driver.quit()
         return
-    
     finally:
         driver.quit()
 
     def update_ui():
-        # Zeitpunkt des Refreshs speichern
         now = datetime.now().strftime("%H:%M:%S")
-        frame["label_wasserstand"].config(text=f"Wasserstand: {wasserstand} cm ({wasserstand_wd}) - {wasserstand_wz}")
-        frame["label_abfluss"].config(text=f"Abfluss: {abfluss} m³/s ({abfluss_qd}) - {abfluss_qz}")
-        frame["title_label"].config(text=f"Messstation {pegel_id} - {selected_position}")
-        frame["last_updated"].config(text=f"Letzte Aktualisierung: {now}")
-
+        widgets["label_wasserstand"].config(text=f"Wasserstand: {wasserstand} cm ({wasserstand_wd}) - {wasserstand_wz}")
+        widgets["label_abfluss"].config(text=f"Abfluss: {abfluss} m³/s ({abfluss_qd}) - {abfluss_qz}")
+        widgets["title_label"].config(text=f"Messstation {pegel_id} - {selected_position}")
+        widgets["last_updated"].config(text=f"Letzte Aktualisierung: {now}")
         print(f"🔄 {selected_position} (ID: {pegel_id}) aktualisiert um {now}")
 
     root.after(0, update_ui)
 
-
 def show_diagram(pegel_url, diagram_type):
-    """Öffnet ein separates Fenster mit dem ausgewählten Diagramm."""
     pegel_id = pegel_url.split("id=")[-1]
     diagram_url = f"https://www.hvz.baden-wuerttemberg.de/gifs/{pegel_id}-{140 if diagram_type == 'wasserstand' else 340}.GIF"
-    
+
     def load_image_from_url(url):
         response = requests.get(url)
         img = Image.open(BytesIO(response.content))
         return ImageTk.PhotoImage(img)
 
     diagram_window = Toplevel(root)
-    diagram_window.title(f"{ 'Wasserstand' if diagram_type == 'wasserstand' else 'Abfluss' }-Diagramm - Messstation {pegel_id}")
+    diagram_window.title(f"{diagram_type.capitalize()}-Diagramm - Messstation {pegel_id}")
     diagram_window.geometry("800x600")
 
     img = load_image_from_url(diagram_url)
 
-    label = tk.Label(diagram_window, text=f"{ 'Wasserstand' if diagram_type == 'wasserstand' else 'Abfluss' }-Diagramm")
+    label = tk.Label(diagram_window, text=f"{diagram_type.capitalize()}-Diagramm")
     label.pack()
     canvas = tk.Canvas(diagram_window, width=img.width(), height=img.height())
     canvas.pack()
     canvas.create_image(0, 0, anchor=tk.NW, image=img)
-
     diagram_window.mainloop()
 
 def auto_refresh():
-    """Aktualisiert alle Messstationen nach der eingestellten Zeit."""
     global refresh_thread
     while True:
         time.sleep(refresh_interval)
-        for pegel_url in station_frames.keys():
-            threading.Thread(target=fetch_data, args=(pegel_url, station_frames[pegel_url]), daemon=True).start()
-
+        for entry in station_entries:
+            threading.Thread(target=fetch_data, args=(entry["url"], entry["widgets"]), daemon=True).start()
 
 def restart_auto_refresh():
-    """Stoppt den alten Refresh-Thread und startet ihn mit der neuen Rate."""
     global refresh_thread
     if refresh_thread:
-        refresh_thread = None  # Den alten Thread beenden
+        refresh_thread = None
     refresh_thread = threading.Thread(target=auto_refresh, daemon=True)
     refresh_thread.start()
 
-
 def set_refresh_rate():
-    """Öffnet ein Fenster zum Setzen der Refresh-Rate in Minuten."""
     popup = Toplevel(root)
     popup.title("Refresh-Rate ändern")
     popup.geometry("300x150")
 
     Label(popup, text="Neue Refresh-Rate (Minuten):", font=("Arial", 12)).pack(pady=10)
-
     entry = Entry(popup, width=10)
-    entry.insert(0, str(refresh_interval // 60))  # Sekunden in Minuten umrechnen
+    entry.insert(0, str(refresh_interval // 60))
     entry.pack(pady=5)
 
     def update_refresh():
         global refresh_interval
         try:
-            new_rate = int(entry.get()) * 60  # Minuten in Sekunden umrechnen
+            new_rate = int(entry.get()) * 60
             if new_rate > 0:
                 refresh_interval = new_rate
                 popup.destroy()
                 print(f"✅ Neue Refresh-Rate: {refresh_interval // 60} Minuten")
-                restart_auto_refresh()  # Den Refresh-Prozess mit der neuen Rate neu starten
+                restart_auto_refresh()
             else:
                 print("⚠️ Bitte eine positive Zahl eingeben.")
         except ValueError:
@@ -153,9 +203,7 @@ def set_refresh_rate():
 
     Button(popup, text="Speichern", command=update_refresh, bg="lightblue", font=("Arial", 12)).pack(pady=10)
 
-
 def open_url_popup():
-    """Öffnet ein Popup-Fenster zur Eingabe der Pegel-URL."""
     popup = Toplevel(root)
     popup.title("Messstation hinzufügen")
     popup.geometry("400x200")
@@ -173,13 +221,9 @@ def open_url_popup():
     Button(popup, text="Hinzufügen", command=submit_url, bg="lightblue", font=("Arial", 12)).pack(pady=10)
     url_entry.bind("<Return>", lambda event: submit_url())
 
-
 def add_station(pegel_url):
-    """Fügt eine neue Messstation über die URL hinzu."""
     pegel_id = pegel_url.split("id=")[-1]
-
     station_frame = tk.Frame(frame, bd=2, relief="ridge", padx=10, pady=10)
-    station_frame.pack(fill="x", padx=10, pady=5)
 
     title_label = tk.Label(station_frame, text=f"Messstation {pegel_id} - Lädt...", font=("Arial", 16, "bold"))
     title_label.pack()
@@ -196,14 +240,34 @@ def add_station(pegel_url):
     last_updated = tk.Label(station_frame, text="Letzte Aktualisierung: --:--:--", font=("Arial", 10, "italic"))
     last_updated.pack()
 
-    station_frames[pegel_url] = {"title_label": title_label, "label_wasserstand": label_wasserstand, "label_abfluss": label_abfluss, "last_updated": last_updated}
-    threading.Thread(target=fetch_data, args=(pegel_url, station_frames[pegel_url]), daemon=True).start()
+    widgets = {
+        "title_label": title_label,
+        "label_wasserstand": label_wasserstand,
+        "label_abfluss": label_abfluss,
+        "last_updated": last_updated
+    }
 
+    station_entries.append({
+        "url": pegel_url,
+        "frame": station_frame,
+        "widgets": widgets
+    })
 
+    rearrange_station_frames()
+    threading.Thread(target=fetch_data, args=(pegel_url, widgets), daemon=True).start()
+
+# Menü
 menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
 menu_bar.add_command(label="Messstation hinzufügen", command=open_url_popup)
 menu_bar.add_command(label="Refresh-Rate ändern", command=set_refresh_rate)
+menu_bar.add_command(label="Darkmode umschalten", command=toggle_dark_mode)
 
-restart_auto_refresh()  # Startet den Auto-Refresh direkt beim Start
+# Initiale Stationen laden
+for url in default_stations:
+    add_station(url)
+
+# Event-Bindings & Start
+root.bind("<Configure>", lambda e: rearrange_station_frames())
+restart_auto_refresh()
 root.mainloop()
