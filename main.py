@@ -10,7 +10,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 import threading
 import time
 from datetime import datetime
+import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+
 
 
 # Tkinter-Hauptfenster
@@ -120,9 +123,9 @@ def toggle_dark_mode():
         entry["frame"].configure(bg=bg_color)
         for widget in entry["widgets"].values():
             widget.configure(bg=bg_color, fg=fg_color)
-
 def fetch_data(pegel_url, widgets):
     pegel_id = pegel_url.split("id=")[-1]
+    driver = None  # wichtig
 
     try:
         service = Service(ChromeDriverManager().install())
@@ -136,11 +139,7 @@ def fetch_data(pegel_url, widgets):
         driver.get(pegel_url)
         time.sleep(5)
 
-        try:
-            selected_position = driver.find_element(By.ID, "ID_SELECT_POS").text
-        except Exception:
-            selected_position = "Unbekannte Position"
-
+        selected_position = driver.find_element(By.ID, "ID_SELECT_POS").text
         wasserstand = driver.find_element(By.ID, "ID_INFO_W").text
         wasserstand_wd = driver.find_element(By.ID, "ID_INFO_WD").text
         wasserstand_wz = driver.find_element(By.ID, "ID_INFO_WZ").text
@@ -150,10 +149,12 @@ def fetch_data(pegel_url, widgets):
 
     except Exception as e:
         print(f"⚠️ Fehler bei {pegel_url}: {e}")
-        driver.quit()
         return
+
     finally:
-        driver.quit()
+        if driver:
+            driver.quit()  # Nur aufrufen, wenn wirklich initialisiert
+
 
     def update_ui():
         now = datetime.now().strftime("%H:%M:%S")
@@ -285,7 +286,7 @@ def add_station(pegel_url):
     "url": pegel_url,
     "frame": station_frame,
     "widgets": widgets,
-    "history": []  # <- hier speichern wir Pegelverlauf
+    "history": []
 })
 
 
